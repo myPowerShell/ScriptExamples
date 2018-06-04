@@ -70,28 +70,27 @@ begin {
         get-wmiobject @params | foreach-object {
             foreach ( $adapterAddress in $_.IPAddress ) { 
                 if ( $adapterAddress -match '(\d{1,3}\.){3}\d{1,3}' ) {
-                    $Description = $_.Description
-                    $currentsetting = $_.TcpipNetbiosOptions
-                    $newsetting = "No-Change"
-    
-                    if ($currentsetting -ne 2) {
-                        $output = $_.settcpipnetbios(2)
-    
-                        if ($output.ReturnValue -eq 0) {
-                            $newsetting = 2
-                        }
-                        Else {$newsetting = "error"}
+                    $CurrentSetting = $_.TcpipNetbiosOptions
+                    $newsetting = $_.TcpipNetbiosOptions
 
+                    if ($_.TcpipNetbiosOptions -ne 2) {
+                        $_.settcpipnetbios(2)
+                        #$config = (Get-wmiobject -Class Win32_NetworkAdapterConfiguration -ComputerName $_.__SERVER -filter 'index = $_.Index') | Select-Object -Property TCPIPNetBIOSOptions
+                        #$newsetting = $config
+                        $newsetting = 2
+                        
                     }
-    
+                    
+
                     new-object PSObject -property @{
-                        "ComputerName"   = $_.__SERVER
-                        "IPAddress"      = $adapterAddress
-                        "Description"    = $Description
-                        "CurrentSetting" = $currentsetting
-                        "UpdatedSetting" = $newsetting
-                    } | select-object ComputerName, IPAddress, Description, CurrentSetting, UpdatedSetting
+                        "ComputerName" = $_.__SERVER
+                        "IPAddress"    = $adapterAddress
+                        "Adapter_Description"  = $_.Description
+                        "Old_Setting"  = $currentsetting
+                        "New_Setting"  = $newsetting
+                    } | select-object ComputerName, IPAddress, Adapter_Description, Old_Setting, New_Setting
      
+                    
                 }
             }
         }
