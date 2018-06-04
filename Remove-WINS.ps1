@@ -70,8 +70,9 @@ begin {
                     
                     if ($_.WINSPrimaryServer -ne $null -or $_WINSSecondaryServer -ne $null) {
                         $_.SetWINSServer('', '')
-                        $_.WINSPrimaryServer = $null
-                        $_.WINSSecondaryServer = $null
+                        $adptr = Get-wmiobject -Class Win32_NetworkAdapterConfiguration -ComputerName $_.__SERVER -filter 'index = $_.Index'
+                        $_.WINSPrimaryServer = $adptr.WINSPrimaryServer
+                        $_.WINSSecondaryServer = $adptr.WINSSecondaryServer
                     }
                     
                     foreach ( $GatewayAddress in $_.DefaultIPGateway ) { 
@@ -82,7 +83,7 @@ begin {
                             "GatewayAddress"      = $_.DefaultIPGateway[0] 
                             "WINSPrimaryServer"   = $_.WINSPrimaryServer 
                             "WINSSecondaryServer" = $_.WINSSecondaryServer 
-                        } | select-object ComputerName, IPAddress,SubnetMask, GatewayAddress, WINSPrimaryServer, WINSSecondaryServer 
+                        } | select-object ComputerName, IPAddress, SubnetMask, GatewayAddress, WINSPrimaryServer, WINSSecondaryServer 
                     } 
                 } 
             } 
