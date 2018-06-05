@@ -70,18 +70,19 @@ begin {
         get-wmiobject @params | foreach-object {
             foreach ( $adapterAddress in $_.IPAddress ) { 
                 if ( $adapterAddress -match '(\d{1,3}\.){3}\d{1,3}' ) {
+                    
                     $CurrentSetting = $_.TcpipNetbiosOptions
-                    $newsetting = $_.TcpipNetbiosOptions
-
+                    $newsetting = "$_.TcpipNetbiosOptions"
+                    
                     if ($_.TcpipNetbiosOptions -ne 2) {
-                        $_.settcpipnetbios(2)
-                        #$config = (Get-wmiobject -Class Win32_NetworkAdapterConfiguration -ComputerName $_.__SERVER -filter 'index = $_.Index') | Select-Object -Property TCPIPNetBIOSOptions
-                        #$newsetting = $config
-                        $newsetting = 2
-                        
+                       $output= $_.settcpipnetbios(2)
+                       
+                       if($Output.Returnvalue -eq 0){
+                       $newsetting = "2"
+                       }Else{$newsetting = "Error"}
+                                                
                     }
                     
-
                     new-object PSObject -property @{
                         "ComputerName" = $_.__SERVER
                         "IPAddress"    = $adapterAddress
