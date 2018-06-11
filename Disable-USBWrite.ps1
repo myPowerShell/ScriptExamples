@@ -12,11 +12,11 @@
   Requires  : PowerShell 2
 
 
-  .ExAMPLES
+  .EXAMPLE
 
   ./Disable-USBWrite.ps1 <C:\Temp\Servers.txt>
 
-
+  .EXAMPLE
   ./Disable-USBWrite.ps1
 
 
@@ -31,7 +31,7 @@
     }
     else{
 
-         $myppath = $args[0];
+         $mypath = $args[0];
 
        }
 
@@ -39,12 +39,15 @@
 $Computers = Get-Content ($mypath) -ErrorAction Stop
 $Date = Get-Date -Format "yyyyMMddhhmmss"
 
-Write-Host "Script execution in Progress... Please review output Action Summary details once completed" -ForegroundColor Yellow
+$max = $Computers.Count
 
+Write-Host "Script execution in Progress... Please wait" -ForegroundColor Yellow
+$Count = 1
 
 @(foreach ($Computer in $Computers){
 
 $Computer = $Computer.trim()
+Write-Host ("Currently Processing Server:" + $Count +" of "+ $max +" "+ $Computer)
 
     if (New-CimSession -ComputerName $Computer -SessionOption (New-CimSessionOption -Protocol Dcom) -ErrorAction SilentlyContinue){
 
@@ -107,11 +110,11 @@ $Computer = $Computer.trim()
     $Objoutput = New-Object -TypeName PSObject -Property $Properties
     Write-output $Objoutput
 
-
+$Count = $Count+1
 
       
 }) | Export-Csv ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv") -NoTypeInformation
 
-
+    Write-Host "Script execution Completed... Done!" -ForegroundColor Green
     Invoke-Item ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv")
 
