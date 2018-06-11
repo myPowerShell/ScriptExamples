@@ -12,9 +12,9 @@
   Requires  : PowerShell 2
 
 
-  .ExAMPLES
+  .EXAMPLE
 
-  ./GetUptime.ps1 <C:\Temp\Servers.txt>
+  ./GetUptime.ps1 C:\Temp\Servers.txt
 
 
   ./GetUptime.ps1
@@ -31,7 +31,7 @@
     }
     else{
 
-         $myppath = $args[0];
+         $mypath = $args[0];
 
        }
 
@@ -85,6 +85,6 @@ Write-output $Objoutput
       
 }) | Export-Csv ("GetUptime_" + $date + ".csv") -NoTypeInformation
 
-
+Write-Host "Script Execution Completed... Done!" -ForegroundColor Green
 
 invoke-Item ("GetUptime_" + $date + ".csv")
