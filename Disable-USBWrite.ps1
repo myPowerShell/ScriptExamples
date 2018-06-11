@@ -1,8 +1,8 @@
 <#
-.SYNOPSIS
+ .SYNOPSIS
  Update Policy Registry Keys on select Servers to Disable USB Write
 
-.DESCRIPTION
+ .DESCRIPTION
  This script looks for Servers.txt file in current folder or takes a custom file path provided as shown in example
  outputs action summary results for review
 
@@ -12,109 +12,108 @@
   Requires  : PowerShell 2
 
 
-  .EXAMPLE
+ .EXAMPLE
+ ./Disable-USBWrite.ps1 C:\Temp\Servers.txt
 
-  ./Disable-USBWrite.ps1 <C:\Temp\Servers.txt>
-
-  .EXAMPLE
+ .EXAMPLE
   ./Disable-USBWrite.ps1
 
 
-  #>
+#>
 
 
-  if($args[0] -eq $null){
+if ($args[0] -eq $null) {
 
-      $mypath = $PSScriptRoot + "\Servers.txt"
+    $mypath = $PSScriptRoot + "\Servers.txt"
 
 
-    }
-    else{
+}
+else {
 
-         $mypath = $args[0];
+    $mypath = $args[0];
 
-       }
+}
 
 
 $Computers = Get-Content ($mypath) -ErrorAction Stop
 $Date = Get-Date -Format "yyyyMMddhhmmss"
-
 $max = $Computers.Count
 
 Write-Host "Script execution in Progress... Please wait" -ForegroundColor Yellow
 $Count = 1
 
-@(foreach ($Computer in $Computers){
+@(foreach ($Computer in $Computers) {
 
-$Computer = $Computer.trim()
-Write-Host ("Currently Processing Server:" + $Count +" of "+ $max +" "+ $Computer)
+        $Computer = $Computer.trim()
+        Write-Host ("Currently Processing Server:" + $Count + " of " + $max + " " + $Computer)
 
-    if (New-CimSession -ComputerName $Computer -SessionOption (New-CimSessionOption -Protocol Dcom) -ErrorAction SilentlyContinue){
+        if (New-CimSession -ComputerName $Computer -SessionOption (New-CimSessionOption -Protocol Dcom) -ErrorAction SilentlyContinue) {
 
-        $KeyName = "Deny_Write"
-        $KeyValue = 1
-        $CurrentVlaue = 0
+            $KeyName = "Deny_Write"
+            $KeyValue = 1
+            $CurrentValue = 0
 
-        $BaseKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBasekey("LocalMachine", "$Computer")
-        $RegPath = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}", $true)
-        $Regpath1 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices", $true)
-        $RegPath2 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows", $true)
+            $BaseKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBasekey("LocalMachine", "$Computer")
+            $RegPath = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}", $true)
+            $Regpath1 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices", $true)
+            $RegPath2 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows", $true)
 
-            if ($RegPath1 -eq $null){
-            $RegPath2.CreateSubKey("RemovableStorageDevices") | Out-Null
-            $Regpath1 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices", $true)             
+            if ($RegPath1 -eq $null) {
+                $RegPath2.CreateSubKey("RemovableStorageDevices") | Out-Null
+                $Regpath1 = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices", $true)             
             }
 
-            if($RegPath -eq $null){
-            $Regpath1.CreateSubkey("{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}") | Out-Null
+            if ($RegPath -eq $null) {
+                $Regpath1.CreateSubkey("{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}") | Out-Null
             }
 
-       $RegPath = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}", $true)
-       $CurrentValue = $RegPath.GetValue("Deny_Write")
+            $RegPath = $BaseKey.OpenSubKey("SOFTWARE\\Policies\\Microsoft\\Windows\\RemovableStorageDevices\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}", $true)
+            $CurrentValue = $RegPath.GetValue("Deny_Write")
 
-       if ($CurrentValue -eq 1){
-       $Properties = [Ordered]@{ComputerName = $Computer
-                                Status = 'Connected'
-                                Deny_USBWrite = 'Compliant'
-                                }
+            if ($CurrentValue -eq 1) {
+                $Properties = [Ordered]@{ComputerName = $Computer
+                    Status = 'Connected'
+                    Deny_USBWrite = 'Compliant'
+                }
        
        
-       }else{
+            }
+            else {
        
-       $RegPath.SetValue($KeyName, $KeyValue, [Microsoft.Win32.RegistryValueKind]::DWORD) | Out-null
-       $Properties = [Ordered]@{ComputerName = $Computer
-                                Status = 'Connected'
-                                Deny_USBWrite = 'Updated'
-                                }
+                $RegPath.SetValue($KeyName, $KeyValue, [Microsoft.Win32.RegistryValueKind]::DWORD) | Out-null
+                $Properties = [Ordered]@{ComputerName = $Computer
+                    Status = 'Connected'
+                    Deny_USBWrite = 'Updated'
+                }
     
        
             }
 
-        $RegPath2.Close()
-        $RegPath1.Close()
-        $RegPath.Close()
-        $BaseKey.Close()
+            $RegPath2.Close()
+            $RegPath1.Close()
+            $RegPath.Close()
+            $BaseKey.Close()
  
         }
-        else{
+        else {
 
             Write-Verbose "Entered Disconnected Hosts Section"
             $Properties = [Ordered]@{ComputerName = $Computer
-                                Status = 'Not Connected'
-                                Deny_USBWrite = $null
-                                }
-
+                Status = 'Not Connected'
+                Deny_USBWrite = $null
             }
 
+        }
 
-    $Objoutput = New-Object -TypeName PSObject -Property $Properties
-    Write-output $Objoutput
 
-$Count = $Count+1
+        $Objoutput = New-Object -TypeName PSObject -Property $Properties
+        Write-output $Objoutput
+
+        $Count = $Count + 1
 
       
-}) | Export-Csv ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv") -NoTypeInformation
+    }) | Export-Csv ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv") -NoTypeInformation
 
-    Write-Host "Script execution Completed... Done!" -ForegroundColor Green
-    Invoke-Item ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv")
+Write-Host "Script execution Completed... Done!" -ForegroundColor Green
+Invoke-Item ("$Env:UserName" + "_Disable_USBWrite_" + $date + ".csv")
 
